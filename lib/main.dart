@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:hackathon/all_coins_page.dart';
+import 'package:hackathon/coins_page.dart';
 
 void main() {
   runApp(MyApp());

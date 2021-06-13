@@ -62,3 +62,5 @@ final List<Coin> initialCoins = [
       15,
       0.2),
 ];
+
+late List<Coin> coinsFromAddress;

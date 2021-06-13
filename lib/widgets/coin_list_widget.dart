@@ -1,15 +1,14 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hackathon/model/Coin.dart';
+import 'package:http/http.dart' as http;
 
 class CoinListWidget extends StatelessWidget {
   final Coin coin;
-  final Animation<double> animation;
   final VoidCallback? onClicked;
 
   const CoinListWidget({
     required this.coin,
-    required this.animation,
     required this.onClicked,
     Key? key,
   }) : super(key: key);
@@ -38,16 +37,11 @@ class CoinTile extends StatelessWidget {
       ),
       child: ListTile(
         contentPadding: EdgeInsets.all(16),
-        leading: CircleAvatar(
-          radius: 32,
-          backgroundImage: NetworkImage(coin.urlImage),
-        ),
+        leading: getCoinImage(),
         title: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(
-              coin.name,
-            ),
+            getCoinName(),
             Text(
               coin.coinBalance.toString(),
             ),
@@ -65,6 +59,24 @@ class CoinTile extends StatelessWidget {
           ],
         ),
       ),
+    );
+  }
+
+  Future<http.Response> fetchCoin() {
+    return http.get(Uri.parse('https://jsonplaceholder.typicode.com/albums/1'));
+  }
+
+  CircleAvatar getCoinImage() {
+    print("hello");
+    return CircleAvatar(
+      radius: 32,
+      backgroundImage: NetworkImage(coin.urlImage),
+    );
+  }
+
+  Text getCoinName() {
+    return Text(
+      coin.name,
     );
   }
 }
