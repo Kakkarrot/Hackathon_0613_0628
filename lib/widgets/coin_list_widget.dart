@@ -1,14 +1,16 @@
+import 'dart:convert';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:hackathon/apiKeys/covalent.dart';
 import 'package:hackathon/model/Coin.dart';
-import 'package:http/http.dart' as http;
 
 class CoinListWidget extends StatelessWidget {
-  final Coin coin;
+  final Future<Coin> coinFuture;
   final VoidCallback? onClicked;
 
   const CoinListWidget({
-    required this.coin,
+    required this.coinFuture,
     required this.onClicked,
     Key? key,
   }) : super(key: key);
@@ -16,7 +18,7 @@ class CoinListWidget extends StatelessWidget {
   @override
   Widget build(BuildContext context) => buildCoin();
 
-  Widget buildCoin() => CoinTile(coin: coin);
+  Widget buildCoin() => CoinTile(coin: coinFuture);
 }
 
 class CoinTile extends StatelessWidget {
@@ -25,7 +27,7 @@ class CoinTile extends StatelessWidget {
     required this.coin,
   }) : super(key: key);
 
-  final Coin coin;
+  final Future<Coin> coin;
 
   @override
   Widget build(BuildContext context) {
@@ -35,46 +37,56 @@ class CoinTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(12),
         color: Colors.white,
       ),
-      child: ListTile(
-        contentPadding: EdgeInsets.all(16),
-        leading: getCoinImage(),
-        title: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            getCoinName(),
-            Text(
-              coin.coinBalance.toString(),
-            ),
-          ],
-        ),
-        subtitle: Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            Text(
-              coin.returnOnInvestment.toString(),
-            ),
-            Text(
-              coin.coinBalanceInDollars.toString(),
-            ),
-          ],
-        ),
+      child: FutureBuilder<Coin>(
+        future: coin,
+        builder: (context, snapshot) {
+          if (snapshot.hasData) {
+            return buildListTileFromFuture(snapshot.data!);
+          } else if (snapshot.hasError) {
+            return Text("${snapshot.error}");
+          }
+
+          return CircularProgressIndicator();
+        },
       ),
     );
   }
 
-  Future<http.Response> fetchCoin() {
-    return http.get(Uri.parse('https://jsonplaceholder.typicode.com/albums/1'));
+  ListTile buildListTileFromFuture(Coin coin) {
+    return ListTile(
+      contentPadding: EdgeInsets.all(16),
+      leading: getCoinImage(coin),
+      title: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          getCoinName(coin),
+          Text(
+            coin.coinBalance.toString(),
+          ),
+        ],
+      ),
+      subtitle: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            coin.returnOnInvestment.toString(),
+          ),
+          Text(
+            coin.coinBalanceInDollars.toString(),
+          ),
+        ],
+      ),
+    );
   }
 
-  CircleAvatar getCoinImage() {
-    print("hello");
+  CircleAvatar getCoinImage(Coin coin) {
     return CircleAvatar(
       radius: 32,
       backgroundImage: NetworkImage(coin.urlImage),
     );
   }
 
-  Text getCoinName() {
+  Text getCoinName(Coin coin) {
     return Text(
       coin.name,
     );
