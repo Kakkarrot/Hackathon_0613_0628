@@ -22,26 +22,41 @@ class CoinsPage extends StatefulWidget {
 class _CoinsPageState extends State<CoinsPage> {
   final List<Coin> coins = List.from(initialCoins);
   late List<Future<Coin>> futureCoins;
+  double totalAccountValue = 0;
 
   final String address = "";
 
   List<Future<Coin>> fetchCoins() {
     List<Future<Coin>> list = [];
-    for (int i = 0; i < 10; i++) {
-      list.add(fetchCoin());
-    }
+    // for (int i = 0; i < 10; i++) {
+    //   list.add(fetchCoin());
+    // }
+    list.add(fetchCoin('btc'));
+    list.add(fetchCoin('eth'));
+    list.add(fetchCoin('bnb'));
+
     return list;
   }
 
-  Future<Coin> fetchCoin() async {
+  void increaseAccountValue(double value) {
+    setState(() {
+      totalAccountValue += value;
+    });
+  }
+
+  Future<Coin> fetchCoin(String coinTicker) async {
     final response = await http.get(Uri.parse('https://api.covalenthq.com' +
         '/v1/pricing/tickers/' +
-        '?tickers=eth&key=' +
+        '?tickers=' +
+        coinTicker +
+        '&key=' +
         covalentApiNoPassword));
     if (response.statusCode == 200) {
       // If the server did return a 200 OK response,
       // then parse the JSON.
-      return Coin.fromJson(jsonDecode(response.body));
+      var coin = Coin.fromJson(jsonDecode(response.body));
+      increaseAccountValue(coin.coinBalanceInDollars);
+      return coin;
     } else {
       // If the server did not return a 200 OK response,
       // then throw an exception.
@@ -65,36 +80,35 @@ class _CoinsPageState extends State<CoinsPage> {
           // the App.build method, and use it to set our appbar title.
           title: Center(
             heightFactor: 100,
-            child: Text(
-              widget.title,
-              textAlign: TextAlign.center,
+            child: Column(
+              children: [
+                Text(
+                  widget.title,
+                  textAlign: TextAlign.center,
+                ),
+                SizedBox(height: 10),
+                Text (
+                  '\$' + '$totalAccountValue',
+                ),
+                // FutureBuilder(
+                //   future: calculateAccountValue(),
+                //   builder: (context, snapshot) {
+                //     if (snapshot.hasData) {
+                //       return convertFutureDoubleToText(snapshot.data);
+                //     } else if (snapshot.hasError) {
+                //       return Text("${snapshot.error}");
+                //     }
+                //
+                //     return CircularProgressIndicator();
+                //   },
+                // ),
+              ],
             ),
           ),
         ),
       ),
-      // body: Center(
-      //   child: FutureBuilder<List<Coin>>(
-      //     future: futureCoins,
-      //     builder: (context, snapshot) {
-      //       if (snapshot.hasData) {
-      //         return AnimatedList(
-      //           initialItemCount: coins.length,
-      //           itemBuilder: (BuildContext context, int index,
-      //                   Animation<double> animation) =>
-      //               CoinListWidget(
-      //             coin: snapshot.data!.first,
-      //             onClicked: () {},
-      //           ),
-      //         );
-      //       } else if (snapshot.hasError) {
-      //         return Text("${snapshot.error}");
-      //       }
-      //       return CircularProgressIndicator();
-      //     },
-      //   ),
-      // ),
       body: AnimatedList(
-        initialItemCount: coins.length,
+        initialItemCount: futureCoins.length,
         itemBuilder:
             (BuildContext context, int index, Animation<double> animation) =>
                 CoinListWidget(
