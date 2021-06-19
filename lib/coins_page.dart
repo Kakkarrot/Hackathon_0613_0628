@@ -72,50 +72,53 @@ class _CoinsPageState extends State<CoinsPage> {
 
   @override
   Widget build(BuildContext context) {
+    var spacingHeight = MediaQuery.of(context).size.height / 20;
     return Scaffold(
-      appBar: PreferredSize(
-        preferredSize: Size.fromHeight(MediaQuery.of(context).size.height / 3),
-        child: AppBar(
-          // Here we take the value from the MyHomePage object that was created by
-          // the App.build method, and use it to set our appbar title.
-          title: Center(
-            heightFactor: 100,
+      appBar: AppBar(
+        // Here we take the value from the MyHomePage object that was created by
+        // the App.build method, and use it to set our appbar title.
+        title: Text(""),
+      ),
+      body: Column(
+        children: [
+          SizedBox(
+            height: MediaQuery.of(context).size.height / 3,
             child: Column(
               children: [
+                SizedBox(height: spacingHeight),
                 Text(
                   widget.title,
                   textAlign: TextAlign.center,
+                  style: createTextStyle(),
                 ),
-                SizedBox(height: 10),
-                Text (
+                SizedBox(height: spacingHeight),
+                Text(
                   '\$' + '$totalAccountValue',
+                  style: createTextStyle(),
                 ),
-                // FutureBuilder(
-                //   future: calculateAccountValue(),
-                //   builder: (context, snapshot) {
-                //     if (snapshot.hasData) {
-                //       return convertFutureDoubleToText(snapshot.data);
-                //     } else if (snapshot.hasError) {
-                //       return Text("${snapshot.error}");
-                //     }
-                //
-                //     return CircularProgressIndicator();
-                //   },
-                // ),
               ],
             ),
           ),
-        ),
-      ),
-      body: AnimatedList(
-        initialItemCount: futureCoins.length,
-        itemBuilder:
-            (BuildContext context, int index, Animation<double> animation) =>
+          AnimatedList(
+            scrollDirection: Axis.vertical,
+            shrinkWrap: true,
+            initialItemCount: futureCoins.length,
+            itemBuilder: (BuildContext context, int index,
+                    Animation<double> animation) =>
                 CoinListWidget(
                     // coin: futureCoins[index],
                     coinFuture: futureCoins[index],
                     onClicked: () {}),
+          ),
+        ],
       ),
     );
+  }
+
+  TextStyle createTextStyle() {
+    return TextStyle(
+                  fontWeight: FontWeight.bold,
+                  fontSize: 15,
+                );
   }
 }

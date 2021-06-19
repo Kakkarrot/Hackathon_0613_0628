@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:hackathon/coins_page.dart';
+import 'package:hackathon/login_page.dart';
 
 void main() {
   runApp(MyApp());
@@ -23,7 +24,8 @@ class MyApp extends StatelessWidget {
         // is not restarted.
         primarySwatch: Colors.blue,
       ),
-      home: CoinsPage(title: 'Account Balance'),
+      // home: CoinsPage(title: 'Account Balance'),
+      home: LoginPage(),
     );
   }
 }
