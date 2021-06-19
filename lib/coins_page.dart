@@ -1,5 +1,4 @@
 import 'dart:convert';
-import 'dart:html';
 
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
@@ -31,6 +30,12 @@ class _CoinsPageState extends State<CoinsPage> {
     // for (int i = 0; i < 10; i++) {
     //   list.add(fetchCoin());
     // }
+    list.add(fetchCoin('btc'));
+    list.add(fetchCoin('eth'));
+    list.add(fetchCoin('bnb'));
+    list.add(fetchCoin('btc'));
+    list.add(fetchCoin('eth'));
+    list.add(fetchCoin('bnb'));
     list.add(fetchCoin('btc'));
     list.add(fetchCoin('eth'));
     list.add(fetchCoin('bnb'));
@@ -99,16 +104,18 @@ class _CoinsPageState extends State<CoinsPage> {
               ],
             ),
           ),
-          AnimatedList(
-            scrollDirection: Axis.vertical,
-            shrinkWrap: true,
-            initialItemCount: futureCoins.length,
-            itemBuilder: (BuildContext context, int index,
-                    Animation<double> animation) =>
-                CoinListWidget(
-                    // coin: futureCoins[index],
-                    coinFuture: futureCoins[index],
-                    onClicked: () {}),
+          Expanded(
+            child: ListView.builder(
+              scrollDirection: Axis.vertical,
+              itemCount: futureCoins.length,
+              itemBuilder: (
+                BuildContext context,
+                int index,
+              ) =>
+                  CoinListWidget(
+                      coinFuture: futureCoins[index],
+                      onClicked: () {}),
+            ),
           ),
         ],
       ),
@@ -117,8 +124,8 @@ class _CoinsPageState extends State<CoinsPage> {
 
   TextStyle createTextStyle() {
     return TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 15,
-                );
+      fontWeight: FontWeight.bold,
+      fontSize: 15,
+    );
   }
 }
