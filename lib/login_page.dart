@@ -9,9 +9,11 @@ class LoginPage extends StatefulWidget {
 
 class _LoginPageState extends State<LoginPage> {
   String address = "";
+  String errorMessage = "";
 
   @override
   void initState() {
+    errorMessage = "";
     super.initState();
   }
 
@@ -26,9 +28,20 @@ class _LoginPageState extends State<LoginPage> {
           SizedBox(height: spacingHeight),
           Container(
             alignment: Alignment.center,
-            child: Container(
-              width: MediaQuery.of(context).size.width * 0.9,
-              child: buildAddressField(),
+            child: Column(
+              children: [
+                Container(
+                  width: MediaQuery.of(context).size.width * 0.9,
+                  child: buildAddressField(),
+                ),
+                Text(
+                  errorMessage,
+                  style: TextStyle(
+                      color: Colors.red,
+                      fontWeight: FontWeight.bold
+                  ),
+                ),
+              ],
             ),
           ),
           SizedBox(height: spacingHeight),
@@ -43,10 +56,24 @@ class _LoginPageState extends State<LoginPage> {
 
   void buildPrint(BuildContext context) {
     print(address);
+    if (address == "fail"){
+      changeErrorMessage("Invalid address! ");
+      return;
+    }
+
+    if (errorMessage.isNotEmpty){
+      changeErrorMessage("");
+    }
     Navigator.push(
       context,
       MaterialPageRoute(builder: (context) => CoinsPage(title: address)),
     );
+  }
+
+  void changeErrorMessage(String message){
+    setState(() {
+      errorMessage = message;
+    });
   }
 
   TextField buildAddressField() {
