@@ -2,6 +2,11 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:hackathon/coins_page.dart';
 
+import 'package:http/http.dart' as http;
+
+import 'apiKeys/covalent.dart';
+
+
 class LoginPage extends StatefulWidget {
   @override
   State<StatefulWidget> createState() => new _LoginPageState();
@@ -10,6 +15,7 @@ class LoginPage extends StatefulWidget {
 class _LoginPageState extends State<LoginPage> {
   String address = "";
   String errorMessage = "";
+  String loadingMessage = "";
 
   @override
   void initState() {
@@ -46,28 +52,42 @@ class _LoginPageState extends State<LoginPage> {
           ),
           SizedBox(height: spacingHeight),
           ElevatedButton(
-            onPressed: () => buildPrint(context),
+            onPressed: () => getAddressLogs(context),
             child: const Text("Login"),
+          ),
+          SizedBox(height: spacingHeight),
+          Text(
+            loadingMessage,
+            style: TextStyle(
+                color: Colors.blueAccent,
+                fontWeight: FontWeight.bold
+            ),
           ),
         ],
       ),
     );
   }
-
-  void buildPrint(BuildContext context) {
-    print(address);
-    if (address == "fail"){
-      changeErrorMessage("Invalid address! ");
-      return;
-    }
-
-    if (errorMessage.isNotEmpty){
+  
+  void getAddressLogs(BuildContext context) async {
+    changeLoadingText("Loading...");
+    changeErrorMessage("");
+    final response = await http.get(Uri.parse('https://api.covalenthq.com' +
+        '/v1/250/address/' +
+        address +
+        '/transactions_v2/?block-signed-at-asc=true&quote-currency=USD&key=' +
+        covalentApiNoPassword));
+    if (response.statusCode == 200) {
       changeErrorMessage("");
+      changeLoadingText("");
+      print(response.body);
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => CoinsPage(title: address)),
+      );
+    } else {
+      changeErrorMessage("Address Not Found");
+      changeLoadingText("");
     }
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (context) => CoinsPage(title: address)),
-    );
   }
 
   void changeErrorMessage(String message){
@@ -76,17 +96,23 @@ class _LoginPageState extends State<LoginPage> {
     });
   }
 
+  void changeLoadingText(String message){
+    setState(() {
+      loadingMessage = message;
+    });
+  }
+
   TextField buildAddressField() {
     return TextField(
       keyboardType: TextInputType.text,
       // maxLines: null,
-      maxLength: 48,
+      maxLength: 60,
       textAlignVertical: TextAlignVertical.top,
       style: TextStyle(
         fontSize: 18,
       ),
       decoration: InputDecoration(
-        hintText: 'Wallet Address',
+        hintText: 'Wallet Address (0x1a2b...)',
         contentPadding: EdgeInsets.symmetric(
           vertical: 8,
           horizontal: 5,

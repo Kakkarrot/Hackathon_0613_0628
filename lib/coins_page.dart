@@ -30,8 +30,8 @@ class _CoinsPageState extends State<CoinsPage> {
     // for (int i = 0; i < 10; i++) {
     //   list.add(fetchCoin());
     // }
-    list.add(fetchCoin('btc'));
-    list.add(fetchCoin('eth'));
+    // list.add(fetchCoin('wftm'));
+    list.add(fetchCoin('ftm'));
     list.add(fetchCoin('bnb'));
     list.add(fetchCoin('btc'));
     list.add(fetchCoin('eth'));
@@ -87,19 +87,18 @@ class _CoinsPageState extends State<CoinsPage> {
       body: Column(
         children: [
           SizedBox(
-            height: MediaQuery.of(context).size.height / 3,
+            height: MediaQuery.of(context).size.height / 5,
             child: Column(
               children: [
                 SizedBox(height: spacingHeight),
                 Text(
-                  widget.title,
+                  hideAddress(widget.title),
                   textAlign: TextAlign.center,
-                  style: createTextStyle(),
+                  style: createTextStyle(15),
                 ),
-                SizedBox(height: spacingHeight),
                 Text(
                   '\$' + '$totalAccountValue',
-                  style: createTextStyle(),
+                  style: createTextStyle(20),
                 ),
               ],
             ),
@@ -122,10 +121,22 @@ class _CoinsPageState extends State<CoinsPage> {
     );
   }
 
-  TextStyle createTextStyle() {
+  String hideAddress(String address) {
+    String result = "";
+    for (int i = 0; i < 3; i++) {
+      result += address[i];
+    }
+    result += '...';
+    for (int i = address.length - 3; i < address.length; i++) {
+      result += address[i];
+    }
+    return result;
+  }
+
+  TextStyle createTextStyle(double fontSize) {
     return TextStyle(
       fontWeight: FontWeight.bold,
-      fontSize: 15,
+      fontSize: fontSize,
     );
   }
 }
