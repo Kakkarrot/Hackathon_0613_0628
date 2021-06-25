@@ -27,7 +27,7 @@ class _LoginPageState extends State<LoginPage> {
   Widget build(BuildContext context) {
     double spacingHeight = MediaQuery.of(context).size.height / 10;
     return Scaffold(
-      body: Column(
+      body: ListView(
         children: [
           SizedBox(height: spacingHeight),
           SizedBox(height: spacingHeight),
@@ -50,17 +50,25 @@ class _LoginPageState extends State<LoginPage> {
               ],
             ),
           ),
-          SizedBox(height: spacingHeight),
-          ElevatedButton(
-            onPressed: () => getAddressLogs(context),
-            child: const Text("Login"),
+          SizedBox(height: spacingHeight/2),
+          Container(
+            width: 20.0,
+            height: 50.0,
+            alignment: Alignment.center,
+            child: ElevatedButton(
+              onPressed: () => getAddressLogs(context),
+              child: const Text("Login"),
+            ),
           ),
-          SizedBox(height: spacingHeight),
-          Text(
-            loadingMessage,
-            style: TextStyle(
-                color: Colors.blueAccent,
-                fontWeight: FontWeight.bold
+          SizedBox(height: spacingHeight/2),
+          Container(
+            alignment: Alignment.center,
+            child: Text(
+              loadingMessage,
+              style: TextStyle(
+                  color: Colors.blueAccent,
+                  fontWeight: FontWeight.bold
+              ),
             ),
           ),
         ],
@@ -102,10 +110,10 @@ class _LoginPageState extends State<LoginPage> {
     });
   }
 
-  TextField buildAddressField() {
-    return TextField(
+  TextFormField buildAddressField() {
+    return TextFormField(
       keyboardType: TextInputType.text,
-      // maxLines: null,
+      initialValue: address,
       maxLength: 60,
       textAlignVertical: TextAlignVertical.top,
       style: TextStyle(

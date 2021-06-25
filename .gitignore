@@ -47,3 +47,5 @@ app.*.map.json
 
 # API keys
 */apiKeys/*
+
+/pubspec.lock
