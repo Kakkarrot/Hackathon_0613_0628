@@ -1,5 +1,9 @@
+import 'dart:convert';
+import 'dart:io';
+
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:hackathon/TransactionHandler.dart';
 import 'package:hackathon/coins_page.dart';
 
 import 'package:http/http.dart' as http;
@@ -79,15 +83,12 @@ class _LoginPageState extends State<LoginPage> {
   void getAddressLogs(BuildContext context) async {
     changeLoadingText("Loading...");
     changeErrorMessage("");
-    final response = await http.get(Uri.parse('https://api.covalenthq.com' +
-        '/v1/250/address/' +
-        address +
-        '/transactions_v2/?block-signed-at-asc=true&quote-currency=USD&key=' +
-        covalentApiNoPassword));
+    TransactionHandler th = new TransactionHandler(address);
+    final response = await th.getTransactionLogsInChronologicalOrder();
     if (response.statusCode == 200) {
       changeErrorMessage("");
       changeLoadingText("");
-      print(response.body);
+      th.processTransactions(response);
       Navigator.push(
         context,
         MaterialPageRoute(builder: (context) => CoinsPage(title: address)),
