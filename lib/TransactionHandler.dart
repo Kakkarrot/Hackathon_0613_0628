@@ -13,6 +13,7 @@ class TransactionHandler {
   late final String address;
   static const num SCALING_FACTOR = 1.0e+18;
   Map<String, dynamic> wallet = new Map();
+  List<Transaction> accountTransactionList = [];
 
   TransactionHandler(String address) {
     this.address = address;
@@ -29,11 +30,13 @@ class TransactionHandler {
 
   void processTransactions(http.Response response) {
     Map<String, dynamic> transactions = jsonDecode(response.body);
-    processSwaps(transactions['data']['items']);
-    processFantomTransactions(transactions);
+    List<Transaction> swaps = processSwaps(transactions['data']['items']);
+    accountTransactionList.addAll(swaps);
+    List<Transaction> depositsAndWithdrawals = processDepositsAndWithdrawals(transactions);
+    accountTransactionList.addAll(depositsAndWithdrawals);
   }
 
-  void processFantomTransactions(Map<String, dynamic> transactions){
+  List<Transaction> processDepositsAndWithdrawals(Map<String, dynamic> transactions){
     List<Transaction> allTransactions = [];
 
     for (int i = 0; i < transactions['data']['items'].length; i++) {
@@ -58,9 +61,10 @@ class TransactionHandler {
             ));
       }
     }
+    return allTransactions;
   }
 
-  void processSwaps(List<dynamic> transactions) {
+  List<Transaction> processSwaps(List<dynamic> transactions) {
     List<Transaction> allTransactions = [];
     for (dynamic transaction in transactions) {
       List<dynamic> logs = transaction['log_events'];
@@ -70,15 +74,15 @@ class TransactionHandler {
         allTransactions.addAll(processedLogs);
       }
     }
-    updateWallet(allTransactions);
+    return allTransactions;
   }
 
-  void updateWallet(List<Transaction> allTransactions) async {
-    for (Transaction transaction in allTransactions) {
-      final response = await getCoinPriceAtDate(transaction.ticker, transaction.date);
-
-    }
-  }
+  // void updateWallet(List<Transaction> allTransactions) async {
+  //   for (Transaction transaction in allTransactions) {
+  //     final response = await getCoinPriceAtDate(transaction.ticker, transaction.date);
+  //
+  //   }
+  // }
 
   Future<double> getCoinPriceAtDate(String ticker, DateTime date) async {
     var formattedDate = DateFormat('yyyy-MM-dd').format(date);
