@@ -91,7 +91,7 @@ class _LoginPageState extends State<LoginPage> {
       th.processTransactions(response);
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => CoinsPage(title: address)),
+        MaterialPageRoute(builder: (context) => CoinsPage(title: address, transactions: th.accountTransactionList,)),
       );
     } else {
       changeErrorMessage("Address Not Found");

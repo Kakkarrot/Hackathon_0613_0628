@@ -86,7 +86,7 @@ class TransactionHandler {
 
   Future<double> getCoinPriceAtDate(String ticker, DateTime date) async {
     var formattedDate = DateFormat('yyyy-MM-dd').format(date);
-    var uri = "https://api.covalenthq.com/v1/pricing/historical/USD/" +
+    String uri = "https://api.covalenthq.com/v1/pricing/historical/USD/" +
             ticker +
             "/?from=" +
             formattedDate +
