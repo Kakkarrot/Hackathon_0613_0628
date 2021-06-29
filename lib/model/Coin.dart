@@ -5,16 +5,15 @@ import 'package:flutter/foundation.dart';
 class Coin {
   final String name;
   final String urlImage;
-  final double coinTradingValue;
   final double coinBalance;
   final double returnOnInvestment;
-  late final double coinBalanceInDollars;
+  late final double vwapCost;
 
-  Coin(this.name, this.urlImage, this.coinTradingValue, this.coinBalance, this.returnOnInvestment){
-    coinBalanceInDollars = coinBalance*coinTradingValue;
-  }
+  Coin(this.name, this.urlImage, this.coinBalance, this.vwapCost, this.returnOnInvestment);
 
   factory Coin.fromJson(Map<String, dynamic> json) {
+    //handle the empty arrays also
+
     return Coin(
       json['data']['items'][0]['contract_ticker_symbol'],
       json['data']['items'][0]['logo_url'],

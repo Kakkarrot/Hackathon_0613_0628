@@ -61,7 +61,7 @@ class CoinTile extends StatelessWidget {
         children: [
           getCoinName(coin),
           Text(
-            coin.coinBalance.toString(),
+            coin.coinBalance.toStringAsFixed(4),
           ),
         ],
       ),
@@ -69,10 +69,10 @@ class CoinTile extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            coin.returnOnInvestment.toString(),
+            'ROI: ' + coin.returnOnInvestment.toStringAsFixed(2) + '%',
           ),
           Text(
-            coin.coinBalanceInDollars.toString(),
+            'Cost Each: \$' + coin.vwapCost.toStringAsFixed(2),
           ),
         ],
       ),

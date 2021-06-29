@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:hackathon/data/startingCoins.dart';
 import 'package:hackathon/model/Transaction.dart';
 import 'package:hackathon/widgets/coin_list_widget.dart';
+import 'package:intl/intl.dart';
 
 import 'apiKeys/covalent.dart';
 import 'model/Coin.dart';
@@ -24,35 +25,23 @@ class _CoinsPageState extends State<CoinsPage> {
   final List<Coin> coins = List.from(initialCoins);
   late List<Future<Coin>> futureCoins;
   double totalAccountValue = 0;
+  double totalProfit = 0;
+  double totalTaxes = 0;
 
   final String address = "";
 
   List<Future<Coin>> fetchCoins() {
-    print(widget.transactions.length);
-    Map<String, DateTime> coinToEarliestDateMap = updateEarliestTransactionDateMap(widget.transactions);
+    Map<String, DateTime> coinToEarliestDateMap = getEarliestTransactionDateMap(widget.transactions);
     List<Future<Coin>> list = [];
 
     for (String ticker in coinToEarliestDateMap.keys) {
-      // list.add(fetchCoin(ticker, coinToEarliestDateMap![ticker], DateTime.now()));
-      list.add(fetchCoin(ticker));
+      list.add(fetchCoin(ticker, coinToEarliestDateMap[ticker], DateTime.now().subtract(const Duration(days: 1))));
     }
-
-
-    // list.add(fetchCoin('wftm'));
-
-    // list.add(fetchCoin('ftm'));
-    // list.add(fetchCoin('bnb'));
-    // list.add(fetchCoin('btc'));
-    // list.add(fetchCoin('eth'));
-    // list.add(fetchCoin('bnb'));
-    // list.add(fetchCoin('btc'));
-    // list.add(fetchCoin('eth'));
-    // list.add(fetchCoin('bnb'));
 
     return list;
   }
 
-  Map<String, DateTime> updateEarliestTransactionDateMap(List<Transaction> transactions){
+  Map<String, DateTime> getEarliestTransactionDateMap(List<Transaction> transactions){
     Map<String, DateTime> earliestTransactionDate = new Map();
     for (Transaction transaction in transactions) {
       if (!earliestTransactionDate.containsKey(transaction.ticker)) {
@@ -66,41 +55,109 @@ class _CoinsPageState extends State<CoinsPage> {
     return earliestTransactionDate;
   }
 
-  void increaseAccountValue(double value) {
+  void updateAccountValue(double value) {
     setState(() {
       totalAccountValue += value;
     });
   }
 
-  Future<Coin> fetchCoin(String ticker) async {
-    //change this to do the call for prices within a range
-    //we only take the first and last price
-    // String uri = "https://api.covalenthq.com/v1/pricing/historical/USD/" +
-    //     ticker +
-    //     "/?from=" +
-    //     startDate +
-    //     "&to=" +
-    //     endDate +
-    //     '&key=' +
-    //     covalentApiNoPassword;
-    // final response = await http.get(Uri.parse(uri));
+  void updateProfit(double value) {
+    setState(() {
+      totalProfit += value;
+    });
+  }
 
-    final response = await http.get(Uri.parse('https://api.covalenthq.com' +
-        '/v1/pricing/tickers/' +
-        '?tickers=' +
+  void updateTax() {
+    setState(() {
+      totalProfit > 0 ? totalTaxes = totalProfit * 0.15 : totalTaxes = 0;
+    });
+  }
+
+  Future<Coin> fetchCoin(String ticker, DateTime? startDate, DateTime endDate) async {
+    String uri = "https://api.covalenthq.com/v1/pricing/historical/USD/" +
         ticker +
-        '&key=' +
-        covalentApiNoPassword));
-    if (response.statusCode == 200) {
-      //we can do the vwap calculation
+        "/?from=" +
+        DateFormat('yyyy-MM-dd').format(startDate!) +
+        "&to=" +
+        DateFormat('yyyy-MM-dd').format(endDate!) +
+        '&prices-at-asc=true&key=' +
+        covalentApiNoPassword;
+    final response = await http.get(Uri.parse(uri));
 
-      //redefine the fromJson to use the new values
-      var coin = Coin.fromJson(jsonDecode(response.body));
-      increaseAccountValue(coin.coinBalanceInDollars);
+    if (response.statusCode == 200) {
+      var decodedJson = jsonDecode(response.body);
+      updatePriceOfTransactionsForCoin(widget.transactions, ticker, decodedJson['data']['prices']);
+      Map<String, List<double>> vwapCostAndPositionMapForCoin = getVwapCostAndPositionMapForCoin(widget.transactions, ticker);
+      double cost = vwapCostAndPositionMapForCoin[ticker]![0];
+      double coinBalance = vwapCostAndPositionMapForCoin[ticker]![1];
+
+
+      Coin coin = new Coin(ticker, decodedJson['data']['logo_url'], coinBalance, cost, calculateReturnOnInvestment(cost, decodedJson['data']['prices']));
+      double currentValue = coin.coinBalance * coin.vwapCost * (1 + coin.returnOnInvestment/100);
+      updateAccountValue(currentValue);
+      double currentProfit = currentValue - coin.coinBalance * coin.vwapCost;
+      updateProfit(currentProfit);
+      updateTax();
       return coin;
     } else {
-      throw Exception('Failed to load coin');
+      Coin coin = new Coin(ticker + ": Missing Data", "https://cryptocurrencyjobs.co/startups/assets/logos/covalent.jpg", 0, 0, 0);
+      return coin;
     }
+  }
+
+  double calculateReturnOnInvestment(double cost, List<dynamic> prices){
+    if (prices.isEmpty)
+      return 0;
+    double priceToday = prices[prices.length-1]['price'];
+    return (priceToday - cost) / cost * 100;
+  }
+  
+  void updatePriceOfTransactionsForCoin(List<Transaction> transactions, String ticker, List<dynamic> prices) {
+    for (Transaction transaction in transactions) {
+      if (transaction.ticker != ticker) {
+        continue;
+      } else {
+        transaction.price = getPriceFromPrices(prices, transaction.date);
+      }
+    }
+  }
+
+  double getPriceFromPrices(List<dynamic> prices, DateTime date) {
+    for (dynamic price in prices) {
+      if (price['date'] == DateFormat('yyyy-MM-dd').format(date)) {
+        return price['price'];
+      }
+    }
+    return 0;
+  }
+
+  //call inside of fetch coin
+  Map<String, List<double>> getVwapCostAndPositionMapForCoin(List<Transaction> transactions, String ticker) {
+    //List = price, amount
+    Map<String, List<double>> transactionVwapCostAndPosition = new Map();
+    for (Transaction transaction in transactions) {
+      if (transaction.ticker != ticker) {
+        continue;
+      }
+      if (transactionVwapCostAndPosition.containsKey(transaction.ticker)) {
+        //we need to do math
+        if (transaction.amount < 0) {
+          transactionVwapCostAndPosition[transaction.ticker]![1] += transaction.amount;
+        } else {
+          double oldPrice = transactionVwapCostAndPosition[transaction.ticker]![0];
+          double oldAmount = transactionVwapCostAndPosition[transaction.ticker]![1];
+          double oldCost = oldPrice * oldAmount;
+          double transactionCost = transaction.price * transaction.amount;
+
+          double newAmount = oldAmount + transaction.amount;
+          double newCost = (oldCost + transactionCost) / newAmount;
+          transactionVwapCostAndPosition[transaction.ticker] = [newCost, newAmount];
+        }
+      } else {
+        transactionVwapCostAndPosition[transaction.ticker] = [transaction.price, transaction.amount];
+      }
+    }
+    return transactionVwapCostAndPosition;
   }
 
   @override
@@ -128,11 +185,20 @@ class _CoinsPageState extends State<CoinsPage> {
                 Text(
                   hideAddress(widget.title),
                   textAlign: TextAlign.center,
-                  style: createTextStyle(15),
+                  style: createTextStyle(15, Colors.black),
+                ),
+                SizedBox(height: spacingHeight/2),
+                Text(
+                  'Balance: \$ ' + totalAccountValue.toStringAsFixed(2),
+                  style: createTextStyle(15, Colors.black),
                 ),
                 Text(
-                  '\$' + '$totalAccountValue',
-                  style: createTextStyle(20),
+                  'Profit: \$ ' + totalProfit.toStringAsFixed(2),
+                  style: totalProfit < 0 ? createTextStyle(15, Colors.red) : createTextStyle(15, Colors.green),
+                ),
+                Text(
+                  'Tax: \$ ' + totalTaxes.toStringAsFixed(2),
+                  style: createTextStyle(15, Colors.black),
                 ),
               ],
             ),
@@ -167,10 +233,11 @@ class _CoinsPageState extends State<CoinsPage> {
     return result;
   }
 
-  TextStyle createTextStyle(double fontSize) {
+  TextStyle createTextStyle(double fontSize, Color color) {
     return TextStyle(
       fontWeight: FontWeight.bold,
       fontSize: fontSize,
+      color: color,
     );
   }
 }

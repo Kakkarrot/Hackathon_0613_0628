@@ -77,15 +77,8 @@ class TransactionHandler {
     return allTransactions;
   }
 
-  // void updateWallet(List<Transaction> allTransactions) async {
-  //   for (Transaction transaction in allTransactions) {
-  //     final response = await getCoinPriceAtDate(transaction.ticker, transaction.date);
-  //
-  //   }
-  // }
-
   Future<double> getCoinPriceAtDate(String ticker, DateTime date) async {
-    var formattedDate = DateFormat('yyyy-MM-dd').format(date);
+    String formattedDate = DateFormat('yyyy-MM-dd').format(date);
     String uri = "https://api.covalenthq.com/v1/pricing/historical/USD/" +
             ticker +
             "/?from=" +
@@ -112,13 +105,14 @@ class TransactionHandler {
     for (dynamic log in logs) {
       if (log['decoded']['name'] == 'Transfer') {
         double amount = getTransferAmount(log);
+        double scalingFactorRatio = log['sender_contract_decimals'];
         if (amount != 0) {
           DateTime date = DateTime.parse(log['block_signed_at']);
           String token = log['sender_contract_ticker_symbol'];
           if (token.compareTo('WFTM') == 0) {
             token = "FTM";
           }
-          Transaction transaction = new Transaction(token, amount, date);
+          Transaction transaction = new Transaction(token, amount / pow(10, scalingFactorRatio), date);
           decodedTransactions.add(transaction);
         }
       }
