@@ -23,12 +23,41 @@ class TransactionHandler {
         '/v1/250/address/' +
         address +
         '/transactions_v2/?block-signed-at-asc=true&quote-currency=USD&key=' +
-        covalentApiNoPassword));
+        covalentApiNoPassword)
+    );
   }
 
   void processTransactions(http.Response response) {
     Map<String, dynamic> transactions = jsonDecode(response.body);
     processSwaps(transactions['data']['items']);
+    processFantomTransactions(transactions);
+  }
+
+  void processFantomTransactions(Map<String, dynamic> transactions){
+    List<Transaction> allTransactions = [];
+
+    for (int i = 0; i < transactions['data']['items'].length; i++) {
+      //deposits
+      if ((transactions['data']['items'][i]['from_address'] != this.address)
+          && (transactions['data']['items'][i]['log_events'].length == 0)){
+        allTransactions.add(
+            Transaction(
+                "FTM",
+                double.parse(transactions['data']['items'][i]['value']) / SCALING_FACTOR,
+                DateTime.parse(transactions['data']['items'][i]['block_signed_at'])
+            ));
+      }
+      //withdrawal
+      else if ((transactions['data']['items'][i]['from_address'] == this.address)
+          && (transactions['data']['items'][i]['log_events'].length == 0)) {
+        allTransactions.add(
+            Transaction(
+                "FTM",
+                -1 * double.parse(transactions['data']['items'][i]['value']) / SCALING_FACTOR,
+                DateTime.parse(transactions['data']['items'][i]['block_signed_at'])
+            ));
+      }
+    }
   }
 
   void processSwaps(List<dynamic> transactions) {
